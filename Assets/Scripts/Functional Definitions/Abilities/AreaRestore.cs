@@ -14,7 +14,6 @@ public class AreaRestore : Ability
         ID = AbilityID.AreaRestore;
         energyCost = 150;
         cooldownDuration = 10;
-        CDRemaining = 10;
     }
 
     /// <summary>
@@ -39,6 +38,5 @@ public class AreaRestore : Ability
                 }
             }
         }
-        isOnCD = true;
     }
 }

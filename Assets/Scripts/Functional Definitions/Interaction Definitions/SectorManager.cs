@@ -138,7 +138,7 @@ public class SectorManager : MonoBehaviour
         }
 
         // deadzone damage
-        if(current && current.type == Sector.SectorType.DangerZone)
+        if(current && GetCurrentType() == Sector.SectorType.DangerZone)
         {
             if(dangerZoneTimer >= 5 && !player.GetIsDead())
             {
@@ -447,7 +447,7 @@ public class SectorManager : MonoBehaviour
 
                         } else shellcore.entityName = blueprint.entityName = data.name;
 
-                        if(current.type == Sector.SectorType.BattleZone)
+                        if(GetCurrentType() == Sector.SectorType.BattleZone)
                         {
                             // add core arrow
                             if(MinimapArrowScript.instance && !(shellcore is PlayerCore))
@@ -1262,5 +1262,13 @@ public class SectorManager : MonoBehaviour
         {
             Destroy(border.Value.gameObject);
         }
+    }
+
+    public Sector.SectorType GetCurrentType()
+    {
+        if (overrideProperties != null)
+            return overrideProperties.type;
+        else
+            return current.type;
     }
 }

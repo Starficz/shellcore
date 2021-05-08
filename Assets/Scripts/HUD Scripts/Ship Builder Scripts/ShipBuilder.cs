@@ -265,7 +265,7 @@ public class ShipBuilder : GUIWindowScripts, IBuilderInterface {
 
 	public void UpdateChain() {
 		if(!editorMode)
-			SetReconstructButton(cursorScript.buildCost > player.credits ? 
+			SetReconstructButton(cursorScript.buildCost > player.GetCredits() ? 
 				ReconstructButtonStatus.NotEnoughCredits : ReconstructButtonStatus.Valid);
 		else SetReconstructButton(ReconstructButtonStatus.Valid);
 
@@ -282,6 +282,30 @@ public class ShipBuilder : GUIWindowScripts, IBuilderInterface {
 			CheckPartIntersectsWithShell(shipPart);
 		}
 
+		foreach(ShipBuilderPart part in cursorScript.parts) {
+			if(part.validPos)
+			{
+				foreach(var part2 in cursorScript.parts)
+				{
+					if(part != part2 && PartIsTooClose(part, part2)) {
+						part.validPos = false;
+						break;
+					}
+				}
+			}
+			else
+			{
+				bool stillTouching = false;
+				foreach(ShipBuilderPart part2 in cursorScript.parts) {
+					if(part2 != part && PartIsTooClose(part, part2)) {
+						stillTouching = true;
+						break;
+					}
+				}
+				if(!stillTouching) part.validPos = true;
+			}
+		}
+
 		foreach(ShipBuilderPart shipPart in cursorScript.parts) {
 			if(!shipPart.isInChain || !shipPart.validPos) {
 				SetReconstructButton(ReconstructButtonStatus.PartInvalidPosition);
@@ -291,6 +315,16 @@ public class ShipBuilder : GUIWindowScripts, IBuilderInterface {
 
 		CheckPartSizes();
 		CheckAbilityCaps();
+	}
+
+	bool PartIsTooClose(ShipBuilderPart part, ShipBuilderPart otherPart) {
+		var closeConstant = mode == BuilderMode.Workshop ? -1.2F : -1F;
+		var rect1 = ShipBuilder.GetRect(part.rectTransform);
+		var rect2 = ShipBuilder.GetRect(otherPart.rectTransform);
+		// add small number (0.005) to deal with floating point issues
+		rect1.Expand((closeConstant - 0.005F) * rect1.extents);
+		rect2.Expand((closeConstant - 0.005F) * rect2.extents);
+		return rect1.Intersects(rect2);
 	}
 
 	private bool CheckPartSizes() {
@@ -316,7 +350,7 @@ public class ShipBuilder : GUIWindowScripts, IBuilderInterface {
 		var extras = CoreUpgraderScript.GetExtraAbilities(player.blueprint.coreShellSpriteID);
 
 		for(int i = 0; i < 4; i++) {
-			if(currentAbilitynumbers[i] > abilityLimits[i] + extras[i]) {
+            if (currentAbilitynumbers[i] > abilityLimits[i] + extras[i]) {
 				SetReconstructButton((ReconstructButtonStatus)(3 + i));
 				return false;
 			}
@@ -850,7 +884,7 @@ public class ShipBuilder : GUIWindowScripts, IBuilderInterface {
 		#endif
 	}
 	public void Deinitialize() {
-		if(!editorMode && cursorScript.buildCost > player.credits) return;
+		if(!editorMode && cursorScript.buildCost > player.GetCredits()) return;
 		if(!CheckAbilityCaps()) return;
 		if(!CheckPartSizes()) return;
 		bool invalidState = false;
@@ -869,7 +903,7 @@ public class ShipBuilder : GUIWindowScripts, IBuilderInterface {
 	public void Export() {
 		if(player)
 		{
-			player.credits -= cursorScript.buildCost;
+			player.AddCredits(cursorScript.buildCost);
 			player.blueprint.parts = new List<EntityBlueprint.PartInfo>();
 			foreach(ShipBuilderPart part in cursorScript.parts) {
 				player.blueprint.parts.Add(part.info);
